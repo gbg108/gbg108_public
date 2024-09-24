@@ -1,0 +1,215 @@
+#!/bin/bash
+
+export GBGP_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" > /dev/null && pwd )"
+export GBGP_ROOT="$(dirname ${GBGP_HOME})"
+
+source ${GBGP_HOME}/.gbgp_colors.sh
+
+[ "${GBGP_PROMPT_ENABLED}" ] || GBGP_PROMPT_ENABLED=true
+
+[ "${GBGP_TOOLS_HOME}" ] || GBGP_TOOLS_HOME="/opt"
+export GBGP_TOOLS_HOME
+
+export TERM=xterm-256color
+
+# Setup big history
+export HISTSIZE=100000
+export HISTFILESIZE=100000
+export HISTCONTROL=ignoreboth:erasedups
+shopt -s histappend
+
+# Setup the prompt. The bracket color will be based on if we're using screen     or not
+if [ $TERM != "xterm" ]; then
+    BRACKET_COLOR=37 #white
+else
+    BRACKET_COLOR=31 #red
+fi
+
+
+# ANSI color codes
+RS="\[\033[0m\]"    # reset
+HC="\[\033[1m\]"    # hicolor
+UL="\[\033[4m\]"    # underline
+INV="\[\033[7m\]"   # inverse background and foreground
+GBGP_PROMPT_FG_BLACK="\[\033[30m\]" # foreground black
+GBGP_PROMPT_FG_RED="\[\033[31m\]" # foreground red
+GBGP_PROMPT_FG_GREEN="\[\033[32m\]" # foreground green
+GBGP_PROMPT_FG_YELLOW="\[\033[33m\]" # foreground yellow
+GBGP_PROMPT_FG_BLUE="\[\033[34m\]" # foreground blue
+GBGP_PROMPT_FG_MAGENTA="\[\033[35m\]" # foreground magenta
+GBGP_PROMPT_FG_CYAN="\[\033[36m\]" # foreground cyan
+GBGP_PROMPT_FG_GRAY="\[\033[37m\]" # foreground gray
+GBGP_PROMPT_FG_WHITE="\[\033[97m\]" # foreground white
+
+GBGP_PROMPT_BG_BLACK="\[\033[40m\]" # background black
+GBGP_PROMPT_BG_RED="\[\033[41m\]" # background red
+GBGP_PROMPT_BG_GREEN="\[\033[42m\]" # background green
+GBGP_PROMPT_BG_YELLOW="\[\033[43m\]" # background yellow
+GBGP_PROMPT_BG_BLUE="\[\033[44m\]" # background blue
+GBGP_PROMPT_BG_MAGENTA="\[\033[45m\]" # background magenta
+GBGP_PROMPT_BG_CYAN="\[\033[46m\]" # background cyan
+GBGP_PROMPT_BG_GRAY="\[\033[47m\]" # background gray
+GBGP_PROMPT_BG_WHITE="\[\033[97m\]" # background white
+
+GBGP_PROMPT_RESET="\[\033[0m\]"
+GBGP_PROMPT_BOLD="\[\033[1m\]"
+GBGP_PROMPT_DIM="\[\033[2m\]"
+GBGP_PROMPT_UNDERLINE="\[\033[3m\]"
+GBGP_PROMPT_BLINK="\[\033[5m\]"
+GBGP_PROMPT_INVERT="\[\033[7m\]"
+GBGP_PROMPT_HIDDEN="\[\033[8m\]"
+
+
+
+# export colors to be used by others
+export GBGP_HOST_BG_COLOR GBGP_HOST_FG_COLOR GBGP_USER_BG_COLOR GBGP_USER_FG_COLOR
+
+GBGP_HOST_FG_COLOR_NAME=GBGP_PROMPT_FG_${GBGP_HOST_FG_COLOR^^}
+[ ! "${!GBGP_HOST_FG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_HOST_FG_COLOR}' since '${GBGP_HOST_FG_COLOR_NAME}' is not defined."
+
+GBGP_HOST_BG_COLOR_NAME=GBGP_PROMPT_BG_${GBGP_HOST_BG_COLOR^^}
+[ ! "${!GBGP_HOST_BG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_HOST_BG_COLOR}' since '${GBGP_HOST_BG_COLOR_NAME}' is not defined."
+
+GBGP_USER_FG_COLOR_NAME=GBGP_PROMPT_FG_${GBGP_USER_FG_COLOR^^}
+[ ! "${!GBGP_USER_FG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_USER_FG_COLOR}' since '${GBGP_USER_FG_COLOR_NAME}' is not defined."
+
+GBGP_USER_BG_COLOR_NAME=GBGP_PROMPT_BG_${GBGP_USER_BG_COLOR^^}
+[ ! "${!GBGP_USER_BG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_USER_BG_COLOR}' since '${GBGP_USER_BG_COLOR_NAME}' is not defined."
+
+if ${GBGP_PROMPT_ENABLED}; then
+  GBGP_PROMPT_DEFAULT="${GBGP_PROMPT_RESET}${GBGP_PROMPT_FG_GRAY}"
+  GBGP_PROMPT_PATH="${GBGP_PROMPT_FG_GRAY}\w\n${GBGP_PROMPT_DEFAULT}"
+  GBGP_PROMPT_USER="${GBGP_PROMPT_BOLD}${!GBGP_USER_BG_COLOR_NAME}${!GBGP_USER_FG_COLOR_NAME}\u${GBGP_PROMPT_DEFAULT}"
+  GBGP_PROMPT_HOST="${GBGP_PROMPT_BOLD}${!GBGP_HOST_BG_COLOR_NAME}${!GBGP_HOST_FG_COLOR_NAME}\H${GBGP_PROMPT_DEFAULT}"
+  GBGP_PROMPT_SHELL="${GBGP_PROMPT_FG_GREEN}+${SHLVL}${GBGP_PROMPT_DEFAULT}"
+  PS1="${GBGP_PROMPT_DEFAULT}\n${GBGP_PROMPT_PATH}[${GBGP_PROMPT_USER}@${GBGP_PROMPT_HOST}:${GBGP_PROMPT_SHELL}] $ "
+else
+  PS1="\n\[\e[1;37m\]\w \n\[\e[1;30m\][\[\e[1;34m\]\u@\H\[\e[1;30m\]:\[\e[0;32m\]+${SHLVL}\[\e[1;30m\]]\[\e[0;37m\]\$ "
+fi
+
+#Setup Aliases
+
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    alias dir='dir --color=auto'
+    alias vdir='vdir --color=auto'
+
+    alias grep='grep -Hn --color=auto'
+    alias fgrep='fgrep -Hn --color=auto'
+    alias egrep='egrep -Hn --color=auto'
+fi
+
+#some more ls aliases
+alias ll='ls -ltra'
+alias la='ls -A'
+alias l='ls -CF'
+alias lsd='ls -d1 */'
+
+#Show hidden files
+alias l.='ls -d .* --color=auto'
+
+#Pretty print path
+alias path='echo -e ${PATH//:/\\n}'
+
+#Force to vim
+alias vim='vim -u "${GBGP_HOME}/.vimrc"'
+alias vi='vim -u "${GBGP_HOME}/.vimrc"'
+
+# Work around sudo not using my path
+alias sudo='sudo env PATH=$PATH'
+
+alias cd..='cd ..'
+
+set -o noclobber
+alias cp='cp -i'
+alias mv='mv -i'
+
+alias pubip='wget http://ipinfo.io/ip -qO -'
+
+#Capture to log
+capture_log() {
+    filename=`date +"%Y_%m_%d_%H%M%S"`
+    [ "${1}" ] && filename+="_${1}"
+    filename+=".log"
+    mkdir -p "$HOME/logs" &> /dev/null
+    script -f "$HOME/logs/${filename}"
+}
+alias log=capture_log
+
+#Tmux launcher
+tmux_launcher() {
+  SESSION_NAME=${1:-"default_session"}
+  tmux attach-session -t "${SESSION_NAME}" &> /dev/null ||\
+    tmux -2 -f ${GBGP_HOME}/.tmux.conf new-session -s "${SESSION_NAME}"
+}
+alias t='tmux_launcher'
+
+#console launcher
+minicom_launcher() {
+  local DEVICE_PATH
+  local DEVICE_NAME
+
+  DEVICE_PATH="/dev/serial/brcm/S${1}"
+  [ -e "${DEVICE_PATH}" ] || DEVICE_PATH="/dev/serial/brcm/${1}"
+  [ -e "${DEVICE_PATH}" ] || DEVICE_PATH="${1}"
+  if [ -e "${DEVICE_PATH}" ]; then
+    DEVICE_NAME=$(basename "${DEVICE_PATH}")
+    tmux renamew "${DEVICE_NAME}"
+
+    # Always start minicom in color with root access
+    TERM=linux sudo minicom --color on --wrap --metakey --baudrate 115200 --8bit --device "${DEVICE_PATH}"
+
+    tmux renamew "#[W]"
+  else
+    echo "Couldn't find any serial device matching '${1}'. Aborting"
+  fi
+}
+alias m='minicom_launcher'
+
+killTree() {
+  local pid=${1}
+  local signal=${2:--TERM}
+  [ ${pid} ] || return 0
+  kill -stop ${pid}
+  for child in $(pgrep -P ${pid}); do
+    killTree ${child} ${signal}
+  done
+  echo "Killing ${1}: $(ps --no-headers -o start_time,pid,ppid,pgid,comm -p ${pid})"
+  kill ${signal} ${pid}
+  kill -cont ${pid}
+  wait ${pid} 2>/dev/null || true
+  return 0
+}
+
+gkill() {
+  if [ $# -eq 0 -o $# -gt 2 ]; then
+    echo "Usage: gkill <pid> [signal]"
+    echo "Examples:"
+    echo "    gkill 1245 TERM"
+    echo "    gkill 1245 9"
+    return 0
+  fi
+  killTree $@
+  return 0
+}
+export -f gkill
+
+nkill() {
+  local name="${1}"
+  local sig="${2:--TERM}"
+  if [ "${name}" ]; then
+    \pgrep "${name}" |
+    while read pid; do
+      gkillp "${pid}" "${sig}"
+    done
+  fi
+}
+export -f nkill
+
+export SVN_EDITOR=vim
+export GIT_EDITOR=vim
+export M2=/usr/share/maven2
+
+# Setup the path
+GBGP_PATH=${GBGP_ROOT}/bin

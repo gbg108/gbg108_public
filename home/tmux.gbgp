@@ -1,0 +1,213 @@
+# Switch to use Ctrl+a as prefix
+set -g prefix C-a
+unbind C-b
+bind C-a send-prefix
+bind -n C-t send-prefix
+
+set -g history-limit 32768 # Scroll History
+set -s escape-time 50 # Lower escape timing from 500ms to 50ms for quicker response to scroll-buffer access.
+set -g base-index 1 # start indexing at one (default = 0)
+set -g pane-base-index 1 # start indexing at one (default = 0)
+set -g status-interval 2
+set -g status-justify left
+set -g status-left-length 0
+set -g status-left ''
+set -g status-right ''
+set -g status-right-length 80
+set -g status-right '#(tmux-mem-cpu-load --cpu --colors)#[fg=white,bg=black] | #(tmux_util get_context)#[fg=white,bg=black] | #(tmux_util get_up)#(tmux_util get_down)#[fg=white,bg=black] | #[fg=brightgreen]%a %H:%M'
+
+# Configure the terminal to use Ctrl+arrow keys
+#set -g terminal-overrides 'xterm*:smcup@:rmcup@'
+set -g terminal-overrides "xterm*:kLFT5=\eOD:kRIT5=\eOC:kUP5=\eOA:kDN5=\eOB:smkx@:rmkx@"
+
+#set -g terminal-overrides "xterm*:smcup@:rmcup@:kLFT5=\eOD:kRIT5=\eOC:kUP5=\eOA:kDN5=\eOB:smkx@:rmkx@"
+# xterm-style function key sequences
+
+# default statusbar colors
+set-option -g               status-fg white
+set-option -g               status-bg black
+#set-option -g               status-fg bold
+
+# Command/message line colors
+set-option -g                message-style fg=white
+set-option -g                message-style bg=red
+set-option -g                message-style bold
+
+set-option -g                status-keys vi
+
+#set-window-option -g         utf8 on
+set-window-option -g         xterm-keys on
+set-window-option -g         mode-keys vi
+set-window-option -g         automatic-rename off
+set-window-option -g         alternate-screen on
+
+#set-window-option -g         window-status-format '#(tmux_util get_inactive_window_status #I #P #D)'
+#set-window-option -g         window-status-current-format '#(tmux_util get_active_window_status #I #P #D)'
+#set-window-option -g         window-status-format '#[fg=white,bg=black,nounderscore,bright]#Y#(cat "/dev/shm/tmux_status_pane.#{USER}.#D")#[dim]#[fg=black,bg=black]  '
+#set-window-option -g         window-status-current-format '#[fg=white,bg=colour130,underscore,bright]#Y#(cat "/dev/shm/tmux_status_pane.#{USER}.#D")#[fg=black,bg=colour130]  '
+
+#set-window-option -g         window-status-format '#[fg=white,bg=black,nounderscore,dim]#Y[#(tmux_util get_window_status #I #P #D #{b:pane_current_path})#[fg=white,bg=black,nounderscore,dim]]  '
+#set-window-option -g         window-status-current-format '#[fg=white,bg=colour130,bright]#Y[#(tmux_util get_window_status #I #P #D #{b:pane_current_path})#[fg=white,bg=colour130,bright]]  '
+
+#set-window-option -g         window-status-current-format '#TEST_#D'
+#set-window-option -g         window-status-format 'A'
+#set-window-option -g         window-status-current-format 'B'
+
+#set-window-option -g         window-status-format '#[fg=white,bg=black,nounderscore,dim]#Y[#(tmux_util get_window_status #I #P #D #{b:pane_current_path})#[fg=white,bg=black,nounderscore,dim]]  '
+#set-window-option -g         window-status-current-format '#[fg=white,bg=colour130,bright]#Y[#(tmux_util get_window_status #I #P #D #{b:pane_current_path})#[fg=white,bg=colour130,bright]]  '
+set-window-option -g         window-status-format ' #[fg=white,bg=black,nounderscore,dim]#Y[#[fg=white,bg=black,nounderscore,dim]#W] '
+set-window-option -g         window-status-current-format ' #[fg=white,bg=colour130,bright]#Y[#[fg=white,bg=colour130,bright]#W] '
+
+# Alerted window in status bar. Windows which have an alert (bell, activity or content).
+#set-window-option -g         window-status-alert-fg white
+#set-window-option -g         window-status-alert-bg red
+#set-window-option -g         window-status-alert-attr blink
+
+##################################################################################
+
+bind r                       source-file "$GBG108_HOME/.tmux.conf" \; display "Reloaded config file!"
+bind q                       confirm-before kill-session
+bind Q                       confirm-before kill-server
+#bind A                       command-prompt -p "Window name: " "run-shell '#(tmux_util set_window_status #I #P #D \"%%\")'"
+bind A                       command-prompt -p "Window name: " "rename-window \'%%\'"
+bind x                       lock-server
+bind d                       detach
+bind *                       list-clients
+bind w                       list-windows
+bind e                       refresh-client
+bind s                       set -g status off
+bind S                       set -g status on
+bind K                       kill-window
+bind k                       kill-pane
+bind -n C-k                  send-keys -R C-m \; clear-history\; display-message "Window cleared!"
+
+# log output
+#bind H                       TNAME='$HOME/tmux-#{session_name}-#{window_index}-#{pane_index}-%Y_%m_%d_%H-%M-%S.log'\; pipe-pane 'cat >>$TNAME' \; display-message '****Started logging to $TNAME'
+bind h                       pipe-pane \; display-message 'Ended logging to $HOME/tmux-#W.log'
+
+bind b               set -g status-right off
+#bind B               set -g status-right '#(tmux-mem-cpu-load --cpu --colors) #[fg=colour7]| #[fg=brightyellow]#(tmux_upspeed)#[fg=brightblue]▲ #[fg=brightyellow]#(tmux_downspeed)#[fg=brightblue]▼ #[fg=colour7]| #(tmux-mem-cpu-load --mem --colors) #[fg=colour7]| #[fg=brightgreen]%a %H:%M'
+
+
+##################################################################################
+# Windows/Pane 
+bind c                       new-window -n ""
+bind |                       split-window -h
+bind _                       split-window -v
+
+# Use Ctl-arrow keys without prefix key to switch windows
+bind n                       next-window
+bind p                       previous-window
+bind -n C-Right              next-window
+bind -n C-Left               previous-window
+bind -n C-Down                 run 'tmux swap-window -d -t #{e|+|:#I,1}'
+bind -n C-Up               run 'tmux swap-window -d -t #{e|-|:#I,1}'
+
+# Use Alt-arrow keys without prefix key to switch panes
+bind -n M-Left               select-pane -L
+bind -n M-Right              select-pane -R
+bind -n M-Up                 select-pane -U
+bind -n M-Down               select-pane -D
+
+## Join windows: <prefix> s, <prefix> j
+bind j                       command-prompt -p "join pane from:"  "join-pane -s '%%'"
+bind J                       command-prompt -p "send pane to:"  "join-pane -t '%%'"
+
+# resize pane with arrow keys
+# -r: can be repeated without pressing prefix
+#     again (500ms after last '-r' action or prefix)
+bind -r Left                 resize-pane -L 2
+bind -r Right                resize-pane -R 2
+bind -r Down                 resize-pane -D 2
+bind -r Up                   resize-pane -U 2
+
+# zoom this pane to full screen
+bind + \
+    new-window -d -n tmux-zoom 'clear && echo TMUX ZOOM && read' \;\
+    swap-pane -s tmux-zoom.1 \;\
+    select-window -t tmux-zoom
+# restore this pane
+bind - \
+    last-window \;\
+    swap-pane -s tmux-zoom.1 \;\
+    kill-window -t tmux-zoom
+
+
+##################################################################################
+# Copy/Paste
+#bind -n C-e                  copy-mode
+bind -n C-v                  paste-buffer
+bind -T copy-mode-vi v       send-keys -X begin-selection
+bind -T copy-mode-vi y       send-keys -X copy-selection
+
+##################################################################################
+# Mouse
+
+# disable mouse control by default - change 'off' to 'on' to enable by default.
+#set-window-option -g mode-mouse off
+#set-option -g mouse-resize-pane off
+#set-option -g mouse-select-pane off
+#set-option -g mouse-select-window off
+set -g mouse off
+
+# set mouse on with prefix m
+bind C-m \
+    set -g mode-mouse on \;\
+    set -g mouse-resize-pane on \;\
+    set -g mouse-select-pane on \;\
+    set -g mouse-select-window on \;\
+    display 'Mouse: ON'
+# set mouse off with prefix M
+bind M \
+    set -g mode-mouse off \;\
+    set -g mouse-resize-pane off \;\
+    set -g mouse-select-pane off \;\
+    set -g mouse-select-window off \;\
+    display 'Mouse: OFF'
+
+##################################################################################
+
+
+
+
+
+
+
+
+
+
+
+
+##########################################
+# BASIC CONFIG
+# instruct tmux to expect UTF-8 sequences
+#set-window-option -g utf8 on
+
+# vi Style Editing
+set-option -g status-keys vi
+set-window-option -g mode-keys vi
+
+# Set ability to capture on start and restore on exit window data when running an application
+set-window-option -g alternate-screen on
+
+# Lower escape timing from 500ms to 50ms for quicker response to scroll-buffer access.
+set -s escape-time 50
+
+# Set display time to 4 seconds
+set-option -gq display-time "3000"
+
+bind P command-prompt -p 'save history to filename:' -I "~/tmux.%Y_%m_%d_%H-%M-%S.log" 'capture-pane -S -32768 ; save-buffer %1 ; delete-buffer'
+
+bind z command-prompt -p 'Saving to ' -I "~/tmux.%Y_%m_%d_%H-%M-%S.log" 'capture-pane -S -32768 ; save-buffer %1 ; delete-buffer ' \; send-keys -R C-m \; clear-history
+
+# List of plugins
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'tmux-plugins/tmux-sensible'
+
+# Other examples:
+# set -g @plugin 'github_username/plugin_name'
+# set -g @plugin 'git@github.com/user/plugin'
+# set -g @plugin 'git@bitbucket.com/user/plugin'
+set -g @plugin 'tmux-plugins/tmux-logging'
+
+#run-shell ${HOME}/tmux-logging/logging.tmux

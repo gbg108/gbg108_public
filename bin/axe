@@ -1,0 +1,159 @@
+#!/bin/bash
+
+#################################################################################################
+set -e
+set -o pipefail
+
+Exit() {
+  set +o errexit
+  set +o errtrace
+
+  local err="${1}"
+}
+
+ExitError() {
+  local msg="${1}"
+  local err=${2:-1}
+  # Disable error exit after this
+  set +e
+  if [ "${msg}" ]; then
+    echo "ERROR(${err})[${progName}]: ${msg}"
+  else
+    echo "ERROR(${err})[${progName}]"
+  fi
+  exit "${err}"
+}
+
+ExitUsage() {
+  local msg=${1}
+
+cat << EOF
+usage: ${progName} <options>
+EOF
+
+  ExitError "${msg}" 1
+}
+
+trap 'ExitError "Interrupted" 130' SIGINT SIGQUIT SIGTERM
+trap 'ExitError "Line ${LINENO}" ${?}' ERR
+trap 'Exit ${?}' EXIT
+
+export progName="$(basename "${BASH_SOURCE[0]%.*}")"
+[ "${progName}" ] || ExitError "Unable to get program name"
+#################################################################################################
+
+Do7ZipExtract() {
+  7z x "${1}"
+}
+
+DoGZipExtract() {
+  gunzip "${1}"
+}
+
+DoTarExtract()  {
+  tar xf "${1}"
+}
+
+DoRarExtract()  {
+  unrar x "${1}"
+}
+
+DoZipExtract()  {
+  unzip -q "${1}"
+}
+
+DoBZipExtract() {
+  tar xjf "${1}"
+}
+
+DoGZipExtract() {
+  tar xzf "${1}"
+}
+
+GetAxeDst() {
+  local file="${1}"
+  dst=$(dirname "${file}")/$(basename "${file%.*}" | tr -cs "\n[:alnum:]-_" "_")
+  ${addSufix} && dst="${dst}_axe"
+  if [ -e "${dst}" ]; then
+    echo >&2 "** WARNING: The expected output path '${dst}' already exists. Skipping"
+    return 2
+  fi
+  mkdir -p "${dst}"
+  if [ $? -ne 0 ]; then
+    echo >&2 "** ERROR: Unable to create the output path '${dst}'. Skipping"
+    return 1
+  fi
+  echo "${dst}"
+  return 0
+}
+
+DoExtract() {
+  local path="${1}"
+  local ext="${2}"
+  local func="${3}"
+
+  local files=$(find "${path}" -maxdepth 1 -type f -name "*${ext}" -o -name "*${ext}.[0-9]*")
+  while read file; do
+    [ -f "${file}" ] || continue
+    echo "Extracting '${file}'..."
+    if ${createSubfolders}; then
+      ret=0
+      dst=$(GetAxeDst "${file}") || ret=$?
+      [ ${ret} -eq 1 ] && exit 1
+      [ ${ret} -eq 2 ] && continue
+      pushd "${dst}" 1>/dev/null
+    fi
+    ${func} "${file}" 1>/dev/null
+    ret=${?}
+    if ${createSubfolders}; then
+      popd 1>/dev/null
+    fi
+    if [ ${ret} -ne 0 ]; then
+      echo >&2 "** ERROR: Unable to fully extract '${file}'"
+      mv "${dst}" "${dst}.partial"
+    fi
+  done <<< "${files}"
+  return 0
+}
+
+export createSubfolders=true
+export addSufix=true
+declare -a fileList=( )
+
+while :
+do
+
+  [ $# -eq 0 ] && [ "$1" != "-h" ] && [ "$1" != "--help" ] && break;
+
+  shiftArgs=1
+  case ${1,,} in
+    -x) set -x;;
+    --raw|-r) createSubfolders=false;;
+    --no_sufix) addSufix=false;;
+    *)
+      fp=$(realpath "${1}")
+      if [ -d "${fp}" ]; then
+        fileList+=( "${fp}" )
+      elif [ -f "${fp}" ]; then
+        fileList+=( "${fp}" )
+      else
+        ExitUsage "The argument '${1}' is not a valid command, diretory or file. Aborting"
+      fi
+      ;;
+  esac
+  shift ${shiftArgs}
+done
+
+# If no files provided assume pwd
+[ ${#fileList[@]} -eq 0 ] && fileList+=( "$(pwd)" )
+
+for ((i = 0; i < ${#fileList[@]}; i++))
+do
+  DoExtract "${fileList[$i]}" ".7z" Do7ZipExtract
+  DoExtract "${fileList[$i]}" ".gz" DoGZipExtract
+  DoExtract "${fileList[$i]}" ".tar" DoTarExtract
+  DoExtract "${fileList[$i]}" ".zip" DoZipExtract
+  DoExtract "${fileList[$i]}" ".bz2" DoBZipExtract
+  DoExtract "${fileList[$i]}" ".tgz" DoGZipExtract
+  DoExtract "${fileList[$i]}" ".rar" DoRarExtract
+done

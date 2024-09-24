@@ -1,0 +1,209 @@
+#!/bin/bash
+
+
+# Pull in GBG108 variables
+source ${GBGP_HOME}/.gbg108.env
+
+defaultFG=white
+defaultBG=black
+
+
+tmux_util_check_context() {
+  local statusFile="${1}"
+  local fg
+  local bg
+  local showUser
+  local user="${USER}"
+  local host="$(hostname)"
+  local hostId="${host//-/_}"
+  local displayContxt
+
+  fg=${GBGP_USER_FG_COLOR_LIST["${user}"]:-${GBGP_USER_FG_COLOR_LIST["default"]}}
+  bg=${GBGP_USER_BG_COLOR_LIST["${user}"]:-${GBGP_USER_BG_COLOR_LIST["default"]}}
+  displayUser="#[fg=${fg},bg=${bg}]${user}"
+
+  showUser=${GBGP_HOST_SHOW_USER["${hostId}"]:-${GBGP_HOST_SHOW_USER["default"]}}
+  ${showUser} && displayContxt+="${displayUser}#[fg=${defaultFG},bg=${blue}]@"
+
+  fg=${GBGP_HOST_FG_COLOR_LIST["${hostId}"]:-${GBGP_HOST_FG_COLOR_LIST["default"]}}
+  bg=${GBGP_HOST_BG_COLOR_LIST["${hostId}"]:-${GBGP_HOST_BG_COLOR_LIST["default"]}}
+  displayContxt+="#[fg=${fg},bg=${bg}]${host}"
+
+  echo "${displayContxt}" > "${statusFile}"
+}
+
+get_window_status() {
+  local window="${2}"
+  local pane="${3}"
+  local paneId="${4}"
+  local pwd="${5}"
+  local statusFile="/dev/shm/tmux_status_pane.${USER}.${paneId}"
+  local localHost="$(hostname)"
+  local fg
+  local bg
+  local short
+  local showUser
+  local path
+  local log
+  local user
+  local host
+  local hostId
+  local displayUser
+  local displayContxt
+
+  echo "${pwd}"
+}
+
+get_window_status_old() {
+
+  # get the last X - not empty - lines. For now we'll just work on two lines
+  log=$(tmux capture-pane -J -p -t "${paneId}" | sed '/^ *$/d' | tail -n 2)
+
+  # Read through the lines to get the user, host and path
+  while read line; do
+    # Try to parse a username. If we have a host then we also have found the user
+    user=$(sed -rn 's/[^a-zA-Z_]*([a-zA-Z_]+[a-zA-Z0-9_-]*)@.*/\1/p' <<< "${line}")
+    [ "${user}" ] || continue;
+
+    host=$(sed -rn 's/.*@([a-zA-Z_]+[a-zA-Z0-9_-]*).*/\1/p' <<< "${line}")
+    hostId="${host//-/_}"
+    [ "${host}" ] && break;
+  done <<< "${log}"
+
+  # If we're not able to get a recognized host and user and we already have valid info, stick with what we have. Abort
+  [[ ! "${user}" || ! "${host}" || ! "${GBGP_USER_SNAME_LIST["${user}"]}" || ! "${GBGP_HOST_SNAME_LIST["${hostId}"]}" ]] && return
+
+  # Start the contxt with an open bracket
+  displayContxt="#[fg=${defaultFG},bg=${defaultBG}]["
+
+  # If this is the default user on the default host then we'll display the working directory. Remote hosts it's hard to know if a path
+  # is valid. For other user on the default host it's hard (but possibile) to determine '~'.  For now we'll not bother.
+  if [[ "${USER}" == "${user}" && "${localHost}" == "${host}" ]]; then
+
+    # Loop over captured text and try to get the path.
+    while read line; do
+
+      #Grab all characters after the fir '/' or '~'
+      path=$(sed -rn -e 's|[^~/]*([~/].*)$|\1|p' <<< "${line}" )
+      if [ "${path}" ]; then
+        # Manually expand '~'' since it's quoted. Otherwise -e will fail
+        [[ ${path:0:1} == '~' ]] && path="${HOME}${path:1}"
+
+        # If this is a path, we're done.
+        [ -e "${path}" ] && break
+
+        # Could be some characters on the end like '#' '$' or ':'. Let's remove and try again.
+        path=$(sed -rn 's|[$:#]+$||p' <<< "${path}")
+
+        # If this is a path, we're done.
+        [ -e "${path}" ] && break
+      fi
+    done <<< "${log}"
+
+    # Add the path to the status
+    displayContxt+="#[fg=${defaultFG},bg=${defaultBG}]"
+    if [ ! -e "${path}" ]; then
+      displayContxt+="???"
+    elif [ "${path}" == "${HOME}" ]; then
+      displayContxt+="~"
+    else
+      displayContxt+=$(basename "${path}")
+    fi
+  else
+    # Either the host or user is not default. We'll show that in the status
+
+    # Get the user string
+    fg=${GBGP_USER_FG_COLOR_LIST["${user}"]:-${GBGP_USER_FG_COLOR_LIST["default"]}}
+    bg=${GBGP_USER_BG_COLOR_LIST["${user}"]:-${GBGP_USER_BG_COLOR_LIST["default"]}}
+    short=${GBGP_USER_SNAME_LIST["${user}"]:-${GBGP_USER_SNAME_LIST["default"]}}
+    displayUser="#[fg=${fg},bg=${bg}]${short}"
+
+    # Get the user string if this not the defualt host
+    if [ "${localHost}" != "${host}" ]; then
+      fg=${GBGP_HOST_FG_COLOR_LIST["${hostId}"]:-${GBGP_HOST_FG_COLOR_LIST["default"]}}
+      bg=${GBGP_HOST_BG_COLOR_LIST["${hostId}"]:-${GBGP_HOST_BG_COLOR_LIST["default"]}}
+      short=${GBGP_HOST_SNAME_LIST["${hostId}"]:-${GBGP_HOST_SNAME_LIST["default"]}}
+      showUser=${GBGP_HOST_SHOW_USER["${hostId}"]:-${GBGP_HOST_SHOW_USER["default"]}}
+
+      # Add the user string if enabled for this host
+      ${showUser} && displayContxt+="${displayUser}#[fg=${defaultFG},bg=${defaultBG}]@"
+
+      # Add the host string
+      displayContxt+="#[fg=${fg},bg=${bg}]${short}"
+    elif [ "${displayUser}" ]; then
+      # Add the user string
+      displayContxt+="${displayUser}"
+    fi
+  fi
+
+  # Add the closing bracket
+  displayContxt+="#[fg=${defaultFG},bg=${defaultBG}]]"
+
+  # Write the context to our status file
+  #echo "${displayContxt}" > "${statusFile}"
+  echo "${displayContxt}"
+}
+
+set_window_status() {
+  local window="${2}"
+  local pane="${3}"
+  local paneId="${4}"
+  local name="${5}"
+  local statusFile="/dev/shm/tmux_status_pane.${USER}.${paneId}"
+  local leadingZero
+
+  echo "${name}" > "/dev/shm/tmux_status_pane.${USER}.${paneId}"
+  [ ${window} -lt 10 ] && leadingZero="0"
+  display="#[fg=white,bg=black,nounderscore,bright]${leadingZero}${window}#[dim]"
+  if [ -f "${statusFile}" ]; then
+    display+="$(<"${statusFile}")"
+  else
+    display+="#[fg=${defaultFG},bg=${defaultBG}][???]"
+  fi
+  display+="#[fg=black,bg=black]  "
+  echo "${display}"
+}
+
+get_context() {
+  local statusFile="/dev/shm/tmux_context.${USER}"
+  [ -f "${statusFile}" ] || tmux_util_check_context "${statusFile}"
+  cat "${statusFile}"
+}
+
+get_down() {
+  ifaceName=$(ip route show default | awk '/default/ {print $5}')
+  [ "${ifaceName}" ] || exit 0
+
+  local RXB=$(<"/sys/class/net/${ifaceName}/statistics/rx_bytes")
+  sleep 2
+  local RXBN=$(<"/sys/class/net/${ifaceName}/statistics/rx_bytes")
+  local RXDIF=$(echo $((RXBN - RXB)) )
+
+  speed=$((RXDIF / 1024 / 2))
+  if [ ${speed} -lt 1000 ]; then
+    printf "#[fg=brightyellow]%3sKb#[fg=brightblue]▼ " "${speed}"
+  else
+    printf "#[fg=brightyellow]%2.1fMb#[fg=brightblue]▼ " "`echo ${speed}/1024 | bc -l`"
+  fi
+  return 0
+}
+
+get_up() {
+  ifaceName=$(ip route show default | awk '/default/ {print $5}')
+  [ "${ifaceName}" ] || exit 0
+
+  local TXB=$(<"/sys/class/net/${ifaceName}/statistics/tx_bytes")
+  sleep 2
+  local TXBN=$(<"/sys/class/net/${ifaceName}/statistics/tx_bytes")
+  local TXDIF=$(echo $((TXBN - TXB)) )
+
+  speed=$((TXDIF / 1024 / 2))
+  if [ ${speed} -lt 1000 ]; then
+    printf "#[fg=brightyellow]%3sKb#[fg=brightblue]▲ " "${speed}"
+  else
+    printf "#[fg=brightyellow]%2.1fMb#[fg=brightblue]▲ " "`echo ${speed}/1024 | bc -l`"
+  fi
+  return 0
+}
+
+${1} ${@}

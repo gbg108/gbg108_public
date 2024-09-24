@@ -1,0 +1,47 @@
+#!/bin/bash
+declare -A GBGP_HOST_FG_COLOR_LIST
+declare -A GBGP_HOST_BG_COLOR_LIST
+declare -A GBGP_HOST_SNAME_LIST
+declare -A GBGP_USER_FG_COLOR_LIST
+declare -A GBGP_USER_BG_COLOR_LIST
+declare -A GBGP_HOST_SHOW_USER
+declare -A GBGP_USER_SNAME_LIST
+
+SetHost() {
+    # '-' in the host name can cause issues with numbers (like host-6). Replace with underscores
+    id="${1//-/_}"
+    GBGP_HOST_NAME_LIST["${id}"]="${1}"
+    GBGP_HOST_SNAME_LIST["${id}"]="${2}"
+    GBGP_HOST_FG_COLOR_LIST["${id}"]="${3}"
+    GBGP_HOST_BG_COLOR_LIST["${id}"]="${4}"
+    GBGP_HOST_SHOW_USER["${id}"]="${5}"
+}
+
+SetUser() {
+    GBGP_USER_SNAME_LIST["${1}"]="${2}"
+    GBGP_USER_FG_COLOR_LIST["${1}"]="${3}"
+    GBGP_USER_BG_COLOR_LIST["${1}"]="${4}"
+}
+
+########################################################################################
+# Users
+########################################################################################
+#        User                     Short Name        FG Color    BG Color
+SetUser "default"                   "???"           white       black
+SetUser "root"                      "su"            white       red
+
+########################################################################################
+# Hosts
+########################################################################################
+#        Host                     Short Name       FG Color    BG Color    Show User
+SetHost "default"                   "???"           white       black        true
+
+########################################################################################
+# Local host defines
+########################################################################################
+host="$(hostname)"
+hostId="${host//-/_}"
+GBGP_HOST_FG_COLOR=${GBGP_HOST_FG_COLOR_LIST["${hostId}"]:-${GBGP_HOST_FG_COLOR_LIST["default"]}}
+GBGP_HOST_BG_COLOR=${GBGP_HOST_BG_COLOR_LIST["${hostId}"]:-${GBGP_HOST_BG_COLOR_LIST["default"]}}
+GBGP_USER_FG_COLOR=${GBGP_USER_FG_COLOR_LIST["${USER}"]:-${GBGP_USER_FG_COLOR_LIST["default"]}}
+GBGP_USER_BG_COLOR=${GBGP_USER_BG_COLOR_LIST["${USER}"]:-${GBGP_USER_BG_COLOR_LIST["default"]}}
