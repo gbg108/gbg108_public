@@ -205,3 +205,7 @@ export M2=/usr/share/maven2
 
 # Setup the path
 GBGP_PATH=${GBGP_ROOT}/bin
+
+export PATH=${GBGP_PATH}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/sbin
+
+
