@@ -109,7 +109,7 @@ alias vim='vim -u "${GBGP_HOME}/vimrc.gbgp"'
 alias vi='vim -u "${GBGP_HOME}/vimrc.gbgp"'
 
 # Work around sudo not using my path
-alias sudo='sudo -i'
+alias sudo='sudo -i '
 
 alias cd..='cd ..'
 
