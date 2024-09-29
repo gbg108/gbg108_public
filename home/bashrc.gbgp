@@ -1,7 +1,8 @@
 #!/bin/bash
 
-source ${GBGP_HOME}/colors.gbgp
+source ${GBGP_HOME}/prompt.gbgp
 [ "${GBGP_PROMPT_ENABLED}" ] || GBGP_PROMPT_ENABLED=true
+export GBGP_PROMPT_ENABLED
 
 export TERM=xterm-256color
 # Setup big history
@@ -15,68 +16,6 @@ if [ $TERM != "xterm" ]; then
     BRACKET_COLOR=37 #white
 else
     BRACKET_COLOR=31 #red
-fi
-
-
-# ANSI color codes
-RS="\[\033[0m\]"    # reset
-HC="\[\033[1m\]"    # hicolor
-UL="\[\033[4m\]"    # underline
-INV="\[\033[7m\]"   # inverse background and foreground
-GBGP_PROMPT_FG_BLACK="\[\033[30m\]" # foreground black
-GBGP_PROMPT_FG_RED="\[\033[31m\]" # foreground red
-GBGP_PROMPT_FG_GREEN="\[\033[32m\]" # foreground green
-GBGP_PROMPT_FG_YELLOW="\[\033[33m\]" # foreground yellow
-GBGP_PROMPT_FG_BLUE="\[\033[34m\]" # foreground blue
-GBGP_PROMPT_FG_MAGENTA="\[\033[35m\]" # foreground magenta
-GBGP_PROMPT_FG_CYAN="\[\033[36m\]" # foreground cyan
-GBGP_PROMPT_FG_GRAY="\[\033[37m\]" # foreground gray
-GBGP_PROMPT_FG_WHITE="\[\033[97m\]" # foreground white
-
-GBGP_PROMPT_BG_BLACK="\[\033[40m\]" # background black
-GBGP_PROMPT_BG_RED="\[\033[41m\]" # background red
-GBGP_PROMPT_BG_GREEN="\[\033[42m\]" # background green
-GBGP_PROMPT_BG_YELLOW="\[\033[43m\]" # background yellow
-GBGP_PROMPT_BG_BLUE="\[\033[44m\]" # background blue
-GBGP_PROMPT_BG_MAGENTA="\[\033[45m\]" # background magenta
-GBGP_PROMPT_BG_CYAN="\[\033[46m\]" # background cyan
-GBGP_PROMPT_BG_GRAY="\[\033[47m\]" # background gray
-GBGP_PROMPT_BG_WHITE="\[\033[97m\]" # background white
-
-GBGP_PROMPT_RESET="\[\033[0m\]"
-GBGP_PROMPT_BOLD="\[\033[1m\]"
-GBGP_PROMPT_DIM="\[\033[2m\]"
-GBGP_PROMPT_UNDERLINE="\[\033[3m\]"
-GBGP_PROMPT_BLINK="\[\033[5m\]"
-GBGP_PROMPT_INVERT="\[\033[7m\]"
-GBGP_PROMPT_HIDDEN="\[\033[8m\]"
-
-
-
-# export colors to be used by others
-export GBGP_HOST_BG_COLOR GBGP_HOST_FG_COLOR GBGP_USER_BG_COLOR GBGP_USER_FG_COLOR
-
-GBGP_HOST_FG_COLOR_NAME=GBGP_PROMPT_FG_${GBGP_HOST_FG_COLOR^^}
-[ ! "${!GBGP_HOST_FG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_HOST_FG_COLOR}' since '${GBGP_HOST_FG_COLOR_NAME}' is not defined."
-
-GBGP_HOST_BG_COLOR_NAME=GBGP_PROMPT_BG_${GBGP_HOST_BG_COLOR^^}
-[ ! "${!GBGP_HOST_BG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_HOST_BG_COLOR}' since '${GBGP_HOST_BG_COLOR_NAME}' is not defined."
-
-GBGP_USER_FG_COLOR_NAME=GBGP_PROMPT_FG_${GBGP_USER_FG_COLOR^^}
-[ ! "${!GBGP_USER_FG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_USER_FG_COLOR}' since '${GBGP_USER_FG_COLOR_NAME}' is not defined."
-
-GBGP_USER_BG_COLOR_NAME=GBGP_PROMPT_BG_${GBGP_USER_BG_COLOR^^}
-[ ! "${!GBGP_USER_BG_COLOR_NAME}" ] && GBGP_PROMPT_VALID=false && echo "Can't set to prompt color '${GBGP_USER_BG_COLOR}' since '${GBGP_USER_BG_COLOR_NAME}' is not defined."
-
-if ${GBGP_PROMPT_ENABLED}; then
-  GBGP_PROMPT_DEFAULT="${GBGP_PROMPT_RESET}${GBGP_PROMPT_FG_GRAY}"
-  GBGP_PROMPT_PATH="${GBGP_PROMPT_FG_GRAY}\w\n${GBGP_PROMPT_DEFAULT}"
-  GBGP_PROMPT_USER="${GBGP_PROMPT_BOLD}${!GBGP_USER_BG_COLOR_NAME}${!GBGP_USER_FG_COLOR_NAME}\u${GBGP_PROMPT_DEFAULT}"
-  GBGP_PROMPT_HOST="${GBGP_PROMPT_BOLD}${!GBGP_HOST_BG_COLOR_NAME}${!GBGP_HOST_FG_COLOR_NAME}\H${GBGP_PROMPT_DEFAULT}"
-  GBGP_PROMPT_SHELL="${GBGP_PROMPT_FG_GREEN}+${SHLVL}${GBGP_PROMPT_DEFAULT}"
-  PS1="${GBGP_PROMPT_DEFAULT}\n${GBGP_PROMPT_PATH}[${GBGP_PROMPT_USER}@${GBGP_PROMPT_HOST}:${GBGP_PROMPT_SHELL}] $ "
-else
-  PS1="\n\[\e[1;37m\]\w \n\[\e[1;30m\][\[\e[1;34m\]\u@\H\[\e[1;30m\]:\[\e[0;32m\]+${SHLVL}\[\e[1;30m\]]\[\e[0;37m\]\$ "
 fi
 
 #Setup Aliases

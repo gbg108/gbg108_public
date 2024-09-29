@@ -1,0 +1,3 @@
+cd "${HOME}"
+git clone https://github.com/gbg108/gbg108_public.git
+echo '[ -f "${HOME}/gbg108_public/install.sh" ] && source "${HOME}/gbg108_public/install.sh"' >> ${HOME}/.bashrc
