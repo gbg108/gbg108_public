@@ -95,13 +95,16 @@ DoExtract() {
   local files=$(find "${path}" -maxdepth 1 -type f -name "*${ext}" -o -name "*${ext}.[0-9]*")
   while read file; do
     [ -f "${file}" ] || continue
-    echo "Extracting '${file}'..."
     if ${createSubfolders}; then
       ret=0
       dst=$(GetAxeDst "${file}") || ret=$?
+      echo "Extracting '$(basename "${file}")' to '${dst}'"
+
       [ ${ret} -eq 1 ] && exit 1
       [ ${ret} -eq 2 ] && continue
       pushd "${dst}" 1>/dev/null
+    else
+      echo "Extracting '$(basename "${file}")' to the current directory..."
     fi
     ${func} "${file}" 1>/dev/null
     ret=${?}
