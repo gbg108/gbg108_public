@@ -80,4 +80,5 @@ SetUser "root"                          white         red
 ########################################################################################
 #        Host                           FG Color      BG Color
 SetHost "default"                       white         black
-SetHost "homeassistant"                 yellow        green
+SetHost "homeassistant"                 blue          green
+SetHost "panel"                         yellow        green
